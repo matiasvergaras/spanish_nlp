@@ -23,7 +23,6 @@ class SpanishPreprocess:
         convert_emojis=False,
         normalize_inclusive_language=False,
         reduce_spam=True,
-        remove_reduplications=True,
         remove_vowels_accents=True,
         remove_multiple_spaces=True,
         remove_punctuation=True,
@@ -34,6 +33,7 @@ class SpanishPreprocess:
         lemmatize=False,
         stem=False,
         remove_html_tags=True,
+        normalize_punctuation=False,
     ):
         """Spanish Preprocess Class for NLP tasks.
 
@@ -59,6 +59,7 @@ class SpanishPreprocess:
             lemmatize (bool, optional): lemmatize text. Defaults to False.
             stem (bool, optional): stem text. Defaults to False.
             remove_html_tags (bool, optional): remove html tags. Defaults to True.
+            normalize_punctuation (bool, optional): normalize punctuation. Defaults to False.
         """
         self.lower = lower
         self.remove_url = remove_url
@@ -71,7 +72,6 @@ class SpanishPreprocess:
         self.convert_emojis = convert_emojis
         self.normalize_inclusive_language = normalize_inclusive_language
         self.reduce_spam = reduce_spam
-        self.remove_reduplications = remove_reduplications
         self.remove_vowels_accents = remove_vowels_accents
         self.remove_multiple_spaces = remove_multiple_spaces
         self.remove_punctuation = remove_punctuation
@@ -82,7 +82,7 @@ class SpanishPreprocess:
         self.stem = stem
         self.lemmatize = lemmatize
         self.remove_html_tags = remove_html_tags
-        self.normalize_punctuation_spelling = True  # True by default
+        self.normalize_punctuation = normalize_punctuation  
 
         self._check_errors_()
         self._prepare_lemmatize_()
@@ -164,7 +164,6 @@ class SpanishPreprocess:
         return text.lower()
 
     def _remove_url_(self, text):
-        text = re.sub(r"(?:\|https?\://)\S+", "", text)
         url_pattern = re.compile(r"https?://\S+|www\.\S+")
         return url_pattern.sub(r"", text)
 
@@ -217,20 +216,6 @@ class SpanishPreprocess:
         text = re.sub(r"(\b(\w+\s){3})\1+", r"\1\1", text)
         return text
 
-    def _remove_reduplications_(self, text):
-        """Use a regular expression to find a sequence of non-digit characters
-        that are repeated at the end of the word, and replace it with just
-        one instance of the character"""
-        # Replace ... with …
-        # text = re.sub(r'\.{3,}', '…', text)
-        # # text = re.sub(r'(?i)(.+?)\1+', r'\1', text)
-        # # Replace … with ...
-        # text = re.sub(r'…', '...', text)
-        # return text
-        
-        # It has bugs, please code it   
-        return text
-
     def _remove_vowels_accents_(self, text):
         """Convert vowels with accents from text (lowercase or uppercase)"""
         text = re.sub(r"[áàäâ]", "a", text)
@@ -279,7 +264,7 @@ class SpanishPreprocess:
     def _remove_multiples_spaces_(self, text):
         return re.sub(" +", " ", text)
 
-    def _normalize_punctuation_spelling_(self, text):
+    def _normalize_punctuation(self, text):
         """Remove all wrong spaces with punctuation"""
         # Remove spaces before punctuation
         text = re.sub(r' +([\.\,\!\?\)\]\}\>\:\#}])', r"\1", text)
@@ -379,18 +364,14 @@ class SpanishPreprocess:
             text = self._normalize_breaklines_(text)
             self._debug_method_(text, "normalize_breaklines") if debug else None
 
-        if self.normalize_punctuation_spelling:
-            text = self._normalize_punctuation_spelling_(text)
+        if self.normalize_punctuation:
+            text = self._normalize_punctuation(text)
             self._debug_method_(
-                text, "normalize_punctuation_spelling"
+                text, "normalize_punctuation"
             ) if debug else None
 
         if self.reduce_spam:
             text = self._reduce_spam_(text)
             self._debug_method_(text, "reduce_spam") if debug else None
-
-        if self.remove_reduplications:
-            text = self._remove_reduplications_(text)
-            self._debug_method_(text, "remove_reduplications") if debug else None
 
         return text
